@@ -1,0 +1,94 @@
+version: '3.8'
+
+volumes:
+  vol-emqx-data:
+    name: foo-emqx-data
+  #vol-emqx-etc:
+  #  name: foo-emqx-etc
+  vol-emqx-log:
+    name: foo-emqx-log
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      TZ: "${TZ}"
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_USER}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASS}"
+    volumes:
+      - ./mongodata:/data/db
+    ports:
+      - ${MONGO_EXT_PORT}:27017
+
+  emqx:
+    container_name: emqx
+    image: emqx/emqx:4.2.3
+    restart: always
+    ports:
+      - 18083:18083
+      - 18084:18084
+      - 1883:1883
+      - 8883:8883
+      - 8083:8083
+      - 8085:8081
+
+    volumes:
+      - vol-emqx-data:/opt/emqx/data
+     # - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
+
+    links:
+      - mongo
+    extra_hosts:
+      - "localhost:10.40.17.105"
+    #  - "localhost:192.168.150.117"
+    #  - "localhost:192.168.250.117"
+
+    environment:
+      EMQX_NAME: hydroPlant_emqx
+      EMQX_HOST: 127.0.0.1
+      TZ: "${TZ}"
+
+      #DEFAULT DASH PASS
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "${EMQX_DEFAULT_USER_PASS}"
+
+      #DEFAULT APP SECRET
+      EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "${EMQX_DEFAULT_SECRET}"
+
+      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_NOMATCH: "deny"
+
+      #MONGO CONNECTION
+      EMQX_AUTH__MONGO__TYPE: single
+      EMQX_AUTH__MONGO__TOPOLOGY__POOL_SIZE: 1
+      EMQX_AUTH__MONGO__TOPOLOGY__MAX_OVERFLOW: 0
+      
+      EMQX_AUTH__MONGO__SERVER: "mongo:${MONGO_EXT_PORT}"
+      EMQX_AUTH__MONGO__POOL: 8
+
+      EMQX_AUTH__MONGO__LOGIN: "${MONGO_USER}"
+      EMQX_AUTH__MONGO__PASSWORD: "${MONGO_PASS}"
+      EMQX_AUTH__MONGO__AUTH_SOURCE: admin
+
+      EMQX_AUTH__MONGO__DATABASE: "hydroplant"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"
+
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
+      EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
+
+      #ENABLE ACL query
+      EMQX_AUTH__MONGO__ACL_QUERY: "on"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
+
+      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
