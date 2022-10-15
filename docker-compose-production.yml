@@ -14,9 +14,9 @@ services:
     container_name: node
     image: "node:14"
     restart: always
-    working_dir: /home/node/HydroponicMonitor
+    working_dir: /home/node/app
     volumes:
-      - ./HydroponicMonitor/index.js:/home/node/HydroponicMonitor/index.js
+      - ./app/:/home/node/app
     ports:
       - "3000:3000"
       - "3001:3001"
@@ -24,7 +24,8 @@ services:
     links:
       - emqx
       - mongo
-    command: sh -c "node index.js"
+    command: sh -c "echo 'delaying 30 seconds' && sleep 30 && npm run start"
+    #command: sh -c "npm install"
 
   mongo:
     image: mongo
