@@ -29,8 +29,6 @@ services:
     container_name: mongo
     image: mongo
     restart: always
-    loggin:
-      driver: "none"
     environment:
       TZ: "${TZ}"
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_USER}"
