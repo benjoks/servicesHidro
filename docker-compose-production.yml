@@ -3,8 +3,6 @@ version: '3.8'
 volumes:
   vol-emqx-data:
     name: foo-emqx-data
-  #vol-emqx-etc:
-  #  name: foo-emqx-etc
   vol-emqx-log:
     name: foo-emqx-log
 
@@ -24,12 +22,15 @@ services:
     links:
       - emqx
       - mongo
-    command: sh -c "echo 'delaying 30 seconds' && sleep 30 && npm run start"
+    command: sh -c "echo 'delaying 30 seconds' && sleep 30 && npm run dev"
     #command: sh -c "npm install"
 
   mongo:
+    container_name: mongo
     image: mongo
     restart: always
+    loggin:
+      driver: "none"
     environment:
       TZ: "${TZ}"
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_USER}"
@@ -43,25 +44,21 @@ services:
     container_name: emqx
     image: emqx/emqx:4.2.3
     restart: always
+
     ports:
       - 18083:18083
-      - 18084:18084
       - 1883:1883
-      - 8883:8883
       - 8083:8083
       - 8085:8081
 
     volumes:
       - vol-emqx-data:/opt/emqx/data
-     # - vol-emqx-etc:/opt/emqx/etc
       - vol-emqx-log:/opt/emqx/log
 
     links:
       - mongo
     extra_hosts:
       - "localhost:10.40.17.105"
-    #  - "localhost:192.168.150.117"
-    #  - "localhost:192.168.250.117"
 
     environment:
       EMQX_NAME: hydroPlant_emqx
